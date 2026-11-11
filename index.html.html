@@ -1,0 +1,373 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Critical Infrastructure Protection</title>
+<style>
+:root{
+  --bg:#f7f6f3;--surface:#ffffff;--text:#1c1b19;--muted:#6b6862;--line:#e3e0da;--accent:#23382f;--onaccent:#f7f6f3;
+  --b0:#b45309;--b1:#be123c;--b2:#475569;--b3:#0f766e;--b4:#a16207;--b5:#1d4ed8;--b6:#7c3aed;--b7:#15803d;--b8:#c2410c;--b9:#0e7490;--hl:#fde68a;
+  --tg:#1d4ed8;--ti:#15803d;--tl:#7c3aed;--say:#8a5a12;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#141412;--surface:#1e1d1b;--text:#ecebe7;--muted:#a19d95;--line:#33312d;--accent:#2a4237;--onaccent:#ecebe7;
+    --b0:#f0a64a;--b1:#ff7d97;--b2:#a9b6c8;--b3:#4fd1c0;--b4:#e8c15a;--b5:#7aa7ff;--b6:#b69cff;--b7:#6ad48a;--b8:#ff9a5c;--b9:#5fc8e0;--hl:#6b5a14;
+    --tg:#7aa7ff;--ti:#6ad48a;--tl:#b69cff;--say:#e8c15a;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#141412;--surface:#1e1d1b;--text:#ecebe7;--muted:#a19d95;--line:#33312d;--accent:#2a4237;--onaccent:#ecebe7;
+  --b0:#f0a64a;--b1:#ff7d97;--b2:#a9b6c8;--b3:#4fd1c0;--b4:#e8c15a;--b5:#7aa7ff;--b6:#b69cff;--b7:#6ad48a;--b8:#ff9a5c;--b9:#5fc8e0;--hl:#6b5a14;
+  --tg:#7aa7ff;--ti:#6ad48a;--tl:#b69cff;--say:#e8c15a;
+}
+*{box-sizing:border-box}
+html,body{background:var(--bg)}
+body{margin:0;color:var(--text);font:15px/1.45 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;-webkit-text-size-adjust:100%}
+.wrap{max-width:880px;margin:0 auto;padding:16px 16px 64px}
+.kicker{font-size:11.5px;letter-spacing:.09em;text-transform:uppercase;color:var(--muted);font-weight:600}
+.root{background:var(--accent);color:var(--onaccent);border-radius:14px;padding:16px 16px 14px;margin:10px 0 4px}
+.root .lbl{font-size:11px;letter-spacing:.09em;text-transform:uppercase;opacity:.75;font-weight:600}
+.root h1{font-size:19px;margin:6px 0 8px;line-height:1.3}
+.root p{margin:0;font-size:13.5px;opacity:.85}
+.toolbar{position:sticky;top:0;z-index:5;background:var(--bg);padding:10px 0;display:flex;flex-wrap:wrap;gap:8px;align-items:center;border-bottom:1px solid var(--line);margin-bottom:6px}
+.toolbar input{flex:1 1 200px;min-width:0;font:inherit;font-size:15px;padding:8px 10px;border-radius:9px;border:1px solid var(--line);background:var(--surface);color:var(--text)}
+.seg{display:flex;flex-wrap:wrap;align-items:center;gap:2px;background:var(--surface);border:1px solid var(--line);border-radius:9px;padding:2px}
+.seg span{font-size:12px;color:var(--muted);padding:0 6px}
+.seg button{font:inherit;font-size:13px;border:none;background:none;color:var(--text);padding:6px 9px;border-radius:7px;cursor:pointer}
+.seg button.on{background:var(--accent);color:var(--onaccent)}
+.hits{font-size:12px;color:var(--muted);width:100%}
+.hits:empty{display:none}
+ul.tree,ul.kids{list-style:none;margin:0;padding:0}
+ul.kids{margin-left:11px;padding-left:12px;border-left:2px solid color-mix(in srgb,var(--bc) 35%,transparent)}
+li[hidden],ul[hidden]{display:none}
+.row{display:flex;align-items:flex-start;gap:6px;padding:5px 6px;border-radius:8px}
+.row.clk{cursor:pointer}
+.row.clk:hover{background:color-mix(in srgb,var(--bc) 8%,transparent)}
+.tg{flex:none;width:22px;height:22px;border:none;background:none;color:var(--bc);padding:0;cursor:pointer;display:grid;place-items:center}
+.tg svg{transition:transform .15s}
+li.open>.row .tg svg{transform:rotate(90deg)}
+.dot{flex:none;width:22px;height:22px;display:grid;place-items:center}
+.dot::after{content:"";width:6px;height:6px;border-radius:50%;background:var(--bc);opacity:.7}
+.body{flex:1;min-width:0}
+.t{display:block}
+.cnt{flex:none;font-size:11px;color:var(--muted);border:1px solid var(--line);border-radius:10px;padding:1px 7px;margin-top:2px}
+li.open>.row .cnt{visibility:hidden}
+.chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:5px}
+.chip{font:inherit;font-size:12px;border:1px solid color-mix(in srgb,var(--bc) 45%,transparent);color:var(--bc);background:color-mix(in srgb,var(--bc) 8%,transparent);border-radius:12px;padding:2px 9px;cursor:pointer}
+.tag{display:inline-block;font-size:10px;font-weight:700;letter-spacing:.04em;border-radius:4px;padding:0 4px;margin-left:5px;vertical-align:1px;border:1px solid currentColor;opacity:.8}
+.tag.g{color:var(--tg)}.tag.i{color:var(--ti)}.tag.l{color:var(--tl)}
+.d1{margin-top:8px}
+.d1>.row{background:var(--surface);border:1px solid var(--line);border-left:4px solid var(--bc);padding:11px 8px;font-weight:650;font-size:16px}
+.d1>.row .num{color:var(--bc);font-weight:700;margin-right:4px}
+.d2>.row .t{font-weight:600}
+.d3>.row .t{font-weight:500}
+.leaf .t{font-weight:400!important;color:color-mix(in srgb,var(--text) 88%,var(--muted))}
+mark{background:var(--hl);color:inherit;border-radius:3px;padding:0 1px}
+@keyframes fl{0%{background:color-mix(in srgb,var(--bc) 30%,transparent)}100%{background:transparent}}
+.flash{animation:fl 1.6s ease-out}
+.d1>.row.flash{animation:none;outline:2px solid var(--bc)}
+.legend{font-size:12px;color:var(--muted);margin:8px 0 0}
+footer{margin-top:28px;font-size:12px;color:var(--muted)}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="kicker">SAFEBET (Guinea) · Omnia Expedimus · International Mining Symposium · November 2026</div>
+  <div class="root">
+    <div class="lbl">Central idea</div>
+    <h1>Every operator already pays for protection, alone. A trained State layer beyond the fence, created by law and funded jointly, would close the gap for less, with command kept by the State.</h1>
+    <p>Ten branches: what has changed, the gap, the record, what operators already do, five tests, the approach, control and rights, cost, delivery, and common questions. The five tests link to where each is met.</p>
+  </div>
+  <div class="toolbar">
+    <input id="q" type="search" placeholder="Search (e.g. Sahel, stipend, pilot)" autocomplete="off">
+    <div class="seg" id="lens"><span>Lens</span><button data-k="" class="on">All</button><button data-k="g">Government</button><button data-k="i">Operator</button><button data-k="l">Lender</button></div>
+    <div class="seg" id="lv"><span>Depth</span><button data-l="1" class="on">1</button><button data-l="2">2</button><button data-l="3">3</button><button data-l="99">All</button></div>
+    <div class="hits" id="hits"></div>
+  </div>
+  <ul class="tree" id="tree"></ul>
+  <p class="legend">Tags: <span class="tag g">GOV</span> ministries · <span class="tag i">OP</span> operators and investors · <span class="tag l">LEND</span> lenders, insurers and boards.</p>
+  <footer>Built from the revised symposium deck, the speaking guide and the opening statement. Concept for discussion, at concept stage with a government partner. All figures are illustrative planning figures.</footer>
+</div>
+<script>
+const MAP={t:"root",c:[
+{t:"What has changed: three shifts at once",c:[
+  {t:"The assets changed shape",a:"i",c:[
+    {t:"More infrastructure financed across the continent than ever: railways, ports, refineries, dams and now data centres"},
+    {t:"No longer compounds behind a fence but lines across a country: track, haul roads, pipelines, cables, repeater towers"},
+    {t:"Protection is split across private suppliers and State regional commands, so there are always gaps",l:["gap"]}
+  ]},
+  {id:"threat",s:"Threat shift",t:"The threat changed",c:[
+    {t:"Sahel insurgency worsening: the Liptako-Gourma borderlands now account for over half of global terrorism-related deaths"},
+    {t:"Tactics have turned to economic warfare: hitting infrastructure to squeeze State resources while projects develop"},
+    {t:"Greater use of AI and drones, mobile multi-front offensives, cross-border coordination"},
+    {t:"Militants strike the fringes (personnel, transport, supply routes) rather than hardened sites; vast footprints make that easier",l:["record"]},
+    {t:"Analysts expect armed groups to press toward the coastal states and the region's established mining heartlands"},
+    {t:"Crime rises too: vast assets make acting undetected easier and policing harder"}
+  ]},
+  {t:"The money changed",a:"l",c:[
+    {t:"Development lenders, export credit agencies and insurers now ask: who protects this, under what law, to what standard, accountable to whom"},
+    {t:"Ad hoc, undocumented security arrangements can no longer be financed",l:["rights"]},
+    {t:"No ministry of finance can absorb the full cost on the national budget",a:"g"}
+  ]}
+]},
+{id:"gap",s:"The gap",t:"The gap: protection stops at the fence",c:[
+  {t:"Inside the fence: mostly unarmed private guards, access control and cameras, with no authority beyond the perimeter"},
+  {t:"Outside the fence: rail, conveyors, roads, power, pipelines, water and fibre run for hundreds of kilometres past communities"},
+  {t:"Every project alone: each operator makes its own arrangement with State forces, so standards, procedures, payments and reporting differ",a:"gl"},
+  {t:"Private security companies still have a real place; many are more than patrols, but the majority model is perimeter guarding"},
+  {t:"The unprotected ground between projects is where the losses happen"},
+  {t:"Recap in three points",c:[
+    {t:"Protection stops at the fence, and the risk no longer does"},
+    {t:"The State already delivers security to operators, but one project at a time"},
+    {t:"Everybody is already paying, and paying multiple times over"}
+  ]}
+]},
+{id:"record",s:"The record",t:"What the record shows about losses",c:[
+  {t:"Loss is counted in stopped days",a:"i",c:[
+    {t:"About 10 days after sabotage of a critical node on a linear asset"},
+    {t:"About 3 days from a community blockade, the most frequent cause"},
+    {t:"Today's arrangements are hard for a lender to verify, which slows financing for the whole pipeline",a:"l"},
+    {t:"Every stopped day costs the company revenue and the State royalties",a:"g"}
+  ]},
+  {t:"What actually stops work, ranked by frequency not alarm",c:[
+    {t:"Community issues: jobs, land, water, compensation; rarely hostile and almost always foreseeable. Needs a presence that talks first and a trusted grievance route"},
+    {t:"Artisanal and displaced-persons interface: informal mining on licensed ground, seasonal movement. Needs a community-facing response with non-lethal options"},
+    {t:"Opportunistic crime along the line: cable, fuel, equipment and consignments. Needs lawful powers to stop, search, detain and hand over"},
+    {t:"Cross-border pressure from the Sahel: the least frequent, and the State is already fighting it. Needs an intelligence-led State layer tied to national command",l:["threat"]},
+    {t:"Three of the four are policing problems, which is the case for a law-enforcement-led unit",l:["command"]}
+  ]},
+  {t:"A decade of regional incidents (2013 to 2026) sorts into five causes",c:[
+    {t:"Armed violence against people: convoy ambush, site raids, kidnap for ransom near concession boundaries"},
+    {t:"Interdiction of supplies: fuel, explosives and resupply convoys"},
+    {t:"Community grievance and blockade: informal checkpoints on haul routes"},
+    {t:"Artisanal encroachment inside licensed ground"},
+    {t:"Regulatory and contractual change: real, but deliberately set aside because no protection answers it"},
+    {t:"The press reports all five as \"mine suspended\"; causally they have nothing in common"}
+  ]},
+  {t:"Less dramatic than the headlines, and more awkward",a:"i",c:[
+    {t:"Only one industrial mine documented as permanently lost to insecurity in the period: the asset is rarely the casualty"},
+    {t:"The longest suspension, eleven months, came from a dispute, not an attack"},
+    {t:"Attack has moved to the supply tail, so protecting the gate no longer protects the mine",l:["modes"]},
+    {t:"Violence against people drives the alarm; loss of access drives the losses"}
+  ]},
+  {t:"Protection must move with the investment",a:"g",c:[
+    {t:"Roads, power, hydro, gold and interconnectors now reach frontier regions with little industry ten years ago"},
+    {t:"Assets are lines crossing districts and borders; no perimeter covers them"},
+    {t:"The State has already moved: special operations units and command structures disrupt networks before they reach sites"},
+    {t:"Intent and will are not the gap; a dedicated CI force would relieve the special operations workload under its own legal mandate"},
+    {t:"A planning problem with a known shape, cheapest to solve now"}
+  ]}
+]},
+{t:"What operators already do, and where it runs out",a:"i",c:[
+  {t:"Current practice, a fair audit rather than a critique",c:[
+    {t:"In-house teams and contractors: strong inside the fence, no powers outside it"},
+    {t:"Arrangements with State forces under MOIs: effective locally, negotiated site by site, hard to evidence to a lender",a:"l"},
+    {t:"Community investment and liaison: prevents much, but does not cover the ground between sites"},
+    {t:"Technology and insurance: buys awareness and recovery, not response"},
+    {t:"Nothing proposed removes any of this"}
+  ]},
+  {t:"The white space: nobody has built a shared mechanism",c:[
+    {t:"No pooled multi-operator protection scheme found anywhere in the region"},
+    {t:"No West African mining code or convention reviewed carries a protection levy",a:"g"},
+    {t:"Thirty operators, thirty private arrangements, one shared risk between them",l:["cost"]}
+  ]}
+]},
+{id:"tests",s:"Five tests",t:"Five tests for any solution, including one of your own",c:[
+  {t:"1 Work beyond the fence: lawful powers to stop, search, detain and hand over",l:["rings"]},
+  {t:"2 Keep command with the State: no private direction of armed personnel, ever",a:"g",l:["command"]},
+  {t:"3 Satisfy whoever finances it: vetting, training, conduct and reporting a lender can verify",a:"l",l:["rights"]},
+  {t:"4 Cost less than going alone: shared where possible, site-specific only where necessary",a:"i",l:["cost"]},
+  {t:"5 Not duplicate what you pay for: inside the fence stays with the operator",a:"i",l:["rings"]}
+]},
+{id:"approach",s:"The approach",t:"The approach: a trained State layer outside the fence",c:[
+  {id:"rings",s:"Two rings",t:"Two rings and one picture",c:[
+    {t:"Outer ring, State unit: mobile, armed, intelligence-led patrols with powers to stop, search and detain"},
+    {t:"Inner ring, private security: static guarding, access control, searches and monitoring, employing local people",a:"i"},
+    {t:"Joint operations room: shared picture, one incident response, a liaison officer in the operator's control room"},
+    {t:"Additive, not a replacement: nothing about the inner ring, existing contracts or local jobs changes"}
+  ]},
+  {t:"Created by law, not by contract",a:"gl",c:[
+    {t:"Mandate, powers, conduct and oversight set in statute"},
+    {t:"Command, weapons and the decision to use force stay with the State at all times",l:["command"]}
+  ]},
+  {t:"One force, trained for the asset it protects",c:[
+    {t:"Human rights first, then modules by asset class"},
+    {t:"Extractive: bulk and metals mining; gold and the artisanal interface"},
+    {t:"Industrial and transport: refineries and industrial sites; ports and maritime; rail and linear assets"},
+    {t:"Energy and digital: transmission corridors; dams and hydro; aviation, utilities and data centres"},
+    {t:"New asset classes join the same curriculum without redesigning the force"}
+  ]},
+  {id:"modes",s:"Point, line, zone",t:"Three deployment geometries: training follows the asset, deployment follows the ground",a:"i",c:[
+    {t:"Point: one site with a footprint (refinery, airport, dam, data centre), a dedicated detachment at or beside it"},
+    {t:"Line: a corridor of hundreds of kilometres, sectors with mobile patrols, response measured in distance"},
+    {t:"Zone: a cluster too small to each carry a detachment (bauxite district, gold belt), one shared hub and reaction element"},
+    {t:"Bases follow the geometry: a remote camp, a town police or gendarmerie post, rooms inside an existing facility"},
+    {t:"The same force covers a mine, a motorway and a data centre; only the geometry changes"}
+  ]}
+]},
+{id:"command",s:"Control and rights",t:"Control, accountability and human rights",c:[
+  {t:"Command and accountability",a:"g",c:[
+    {t:"Led by a law-enforcement service: judicial police powers, policing use-of-force standards, lawful detention and handover",a:"l"},
+    {t:"Special forces engaged: command and training staff, plus the national reserve for serious incidents"},
+    {t:"Strategic oversight committee approves doctrine, the annual deployment plan and senior appointments"},
+    {t:"One unit, one standard: single doctrine, training standard and chain of command"},
+    {t:"The State sets the deployment plan",a:"i"}
+  ]},
+  {id:"rights",s:"Human rights",t:"Human rights are a requirement, built in",a:"l",c:[
+    {t:"Vetting against past conduct: before selection, before any command post, every two years after"},
+    {t:"Suspension triggers at individual, detachment and programme level, funding paused if findings are ignored"},
+    {t:"Grievance and remedy open to communities, anonymous if needed, independent monitor, remedy reserve"},
+    {t:"Disclosure: published stipend scale, international audit, EITI-style reporting"},
+    {t:"IFC Performance Standard 4 and the Voluntary Principles put the burden on the company when State forces protect it; this moves it into a system"},
+    {t:"Sierra Leone appeal: breach of the Voluntary Principles would have breached a duty of care, so documented implementation is a standard of care"}
+  ]},
+  {id:"oversight",s:"Oversight ladder",t:"How much outside oversight of the money",a:"gl",c:[
+    {t:"1 Published budget line alone: not enough, contributions stall"},
+    {t:"2 Ring-fenced central bank account, dual signature, annual international audit: minimum credible"},
+    {t:"3 Level 2 plus a nationally chaired board, State majority, contributors on finance only, independent human rights monitor: recommended"},
+    {t:"4 Independent trustee releasing funds against milestones: development-lender tranche only"},
+    {t:"5 Investor-majority international fund manager: not recommended, incompatible with sovereignty"},
+    {t:"Oversight reaches the money, never deployment, rules of engagement or personnel"}
+  ]}
+]},
+{id:"cost",s:"Cost",t:"Who pays, what it costs and what it is worth",c:[
+  {t:"The split: neither side asked for what it cannot give",c:[
+    {t:"The State carries: salaries, weapons and ammunition, rations, accommodation and fuel at bases, command, legal authority and land",a:"g"},
+    {t:"Investors fund: training and certification, vehicles, comms and surveillance, bases and posts, coordination, independent audit and a modest stipend",a:"i"},
+    {t:"No company pays any individual or unit; the stipend goes through the State payroll against a verified roll",a:"l"}
+  ]},
+  {t:"Six routes for the money",c:[
+    {t:"A security annex replacing site arrangements when memoranda are redrafted",a:"i"},
+    {t:"A contribution written into new conventions: per tonne, per MWh or per passenger",a:"gi"},
+    {t:"Security costed into lender-financed works at financing stage",a:"l"},
+    {t:"Blended facility: a development lender takes first loss; in-kind camps and equipment count at audited value",a:"l"},
+    {t:"Government-to-government packages for training and non-lethal equipment",a:"g"},
+    {t:"The State itself: personnel, pay, weapons, base life support, command and legal authority",a:"g"}
+  ]},
+  {t:"Why the cost falls",c:[
+    {t:"National instructors replace international ones (illustrative programme of about 2,000)",a:"g",c:[
+      {t:"Year 1 is expensive because you are buying a training centre, equipment and courseware"},
+      {t:"Each national instructor replaces an international instructor, an interpreter and their flights"}
+    ]},
+    {t:"Every member lowers the cost for the rest",a:"i",c:[
+      {t:"Training, doctrine, coordination and audit cost the same for 5 or 30 members; at 30, each carries about a sixth"},
+      {t:"For ministries: legislate once rather than negotiate thirty times",a:"g"}
+    ]}
+  ]},
+  {t:"Value against what it protects",a:"i",c:[
+    {t:"Illustrative: for a mid-sized operation, the annual contribution is a small fraction of the output it protects"},
+    {t:"Each operator should test this against its own figures; the return depends on stopped days actually prevented, which the pilot measures"}
+  ]}
+]},
+{t:"Delivery: phased, precedented and nationally owned",c:[
+  {t:"Built in phases, with a gate at each one",a:"gi",c:[
+    {t:"Foundation: assess State personnel and equipment, designate assets, draft the law, agree funding terms"},
+    {t:"Pilot: one corridor or site, independent evaluation against agreed criteria"},
+    {t:"Zones: region by region, by threat and funding, not by highest bidder"},
+    {t:"Sustainment: national instructors run the school, with refreshers, equipment refresh and annual audit"},
+    {t:"Nobody signs for the whole programme on day one"}
+  ]},
+  {t:"Tested against practice, not invented",a:"gl",c:[
+    {t:"India: a State force protects private airports, funded by a security fee held in trust"},
+    {t:"Papua New Guinea: a project supports national police under a memorandum, command with the State"},
+    {t:"Jordan: the airport concessionaire funds security infrastructure as a contract obligation"},
+    {t:"Kenya: operator-funded human rights training for a national infrastructure protection unit"},
+    {t:"What is new is the combination as one national shared-cost scheme"}
+  ]},
+  {t:"The concept transfers; five answers are national",a:"g",c:[
+    {t:"Which service leads, and where the military sits: oversight, reserve or command"},
+    {t:"What creates the unit: a dedicated act, a decree or a mining code chapter"},
+    {t:"Where the money sits and who audits it",l:["oversight"]},
+    {t:"How contributions are set: security annex, or per tonne, MWh or passenger"},
+    {t:"Where the pilot goes, and what result would make the answer no"}
+  ]}
+]},
+{t:"Common questions, and what this could look like for you",c:[
+  {t:"Concerns raised about the model, and the answers",c:[
+    {t:"\"This is private hire of State forces\": created by law; investors fund capability through a national fund and never pay personnel or units; the State sets deployment",a:"g",l:["command"]},
+    {t:"\"The money won't be accounted for\": ring-fenced dual-signature account, published stipend scale, competitive procurement, international audit, public disclosure",a:"gl",l:["oversight"]},
+    {t:"\"A human rights incident will follow\": vetting, suspension at three levels, independent monitor, grievance and remedy with a reserve",a:"l",l:["rights"]},
+    {t:"\"Companies will free-ride\": coverage follows members, new conventions carry the clause, founding terms reward early signers",a:"i"},
+    {t:"\"Lenders cannot fund security forces\": a law-enforcement-led unit, with funding scoped to training, governance, community liaison, bases and non-lethal equipment",a:"l"}
+  ]},
+  {t:"Next steps that commit no one",c:[
+    {t:"Government: designate the assets that matter nationally",a:"g"},
+    {t:"Government: decide which service leads, and settle it in law",a:"g"},
+    {t:"Government: commission an assessment of the personnel, equipment and bases already held",a:"g"},
+    {t:"Operator: ask for the outer ring as a service standard in the next convention",a:"i"},
+    {t:"Operator: price the premium as a known cost, not an open risk",a:"i"},
+    {t:"Operator: compare what a shared scheme would cost against carrying it alone",a:"i"}
+  ]}
+]}
+]};
+
+const TAGS={g:"GOV",i:"OP",l:"LEND"};
+const byId={},all=[];let uid=0;
+function prep(n,p,d,bi){n.id=n.id||"n"+(uid++);n.p=p;n.d=d;n.bi=bi;byId[n.id]=n;all.push(n);(n.c||[]).forEach((ch,i)=>prep(ch,n,d+1,d===0?i:bi));}
+prep(MAP,null,0,0);
+const chev='<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg>';
+function esc(s){return s.replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));}
+function build(n,idx){
+  const li=document.createElement("li");
+  li.className="d"+Math.min(n.d,3)+(n.c?"":" leaf");
+  li.style.setProperty("--bc","var(--b"+n.bi+")");
+  const row=document.createElement("div");row.className="row";
+  if(n.c){const b=document.createElement("button");b.className="tg";b.setAttribute("aria-label","Expand or collapse");b.innerHTML=chev;b.onclick=e=>{e.stopPropagation();toggle(n);};row.appendChild(b);}
+  else{const s=document.createElement("span");s.className="dot";row.appendChild(s);}
+  const body=document.createElement("div");body.className="body";
+  if(n.d===1){const num=document.createElement("span");num.className="num";num.textContent=(idx+1)+".";body.appendChild(num);}
+  const t=document.createElement("span");t.className="t";t.textContent=n.t;if(n.d===1)t.style.display="inline";body.appendChild(t);n.tEl=t;
+  if(n.a){[...n.a].forEach(k=>{const g=document.createElement("span");g.className="tag "+k;g.textContent=TAGS[k];body.appendChild(g);});}
+  if(n.l){const ch=document.createElement("div");ch.className="chips";n.l.forEach(id=>{const a=document.createElement("button");a.className="chip";a.style.setProperty("--bc","var(--b"+byId[id].bi+")");a.textContent="→ "+(byId[id].s||byId[id].t);a.onclick=e=>{e.stopPropagation();goTo(id);};ch.appendChild(a);});body.appendChild(ch);}
+  row.appendChild(body);
+  if(n.c){const c=document.createElement("span");c.className="cnt";c.textContent=n.c.length;row.appendChild(c);row.classList.add("clk");row.onclick=()=>toggle(n);}
+  li.appendChild(row);n.li=li;n.row=row;
+  if(n.c){const ul=document.createElement("ul");ul.className="kids";n.c.forEach((ch,i)=>ul.appendChild(build(ch,i)));li.appendChild(ul);n.ul=ul;setOpen(n,false);}
+  return li;
+}
+function setOpen(n,o){if(!n.c||!n.ul)return;n.open=o;n.ul.hidden=!o;n.li.classList.toggle("open",o);}
+function toggle(n){setOpen(n,!n.open);}
+let level=1,lens="";
+function toLevel(L){all.forEach(n=>{if(n.d>0&&n.c)setOpen(n,n.d<L);});}
+const tree=document.getElementById("tree");
+MAP.c.forEach((ch,i)=>tree.appendChild(build(ch,i)));
+toLevel(1);
+const q=document.getElementById("q"),hits=document.getElementById("hits");
+function markText(n,s){if(!s){n.tEl.textContent=n.t;return;}const i=n.t.toLowerCase().indexOf(s);if(i<0){n.tEl.textContent=n.t;return;}n.tEl.innerHTML=esc(n.t.slice(0,i))+"<mark>"+esc(n.t.slice(i,i+s.length))+"</mark>"+esc(n.t.slice(i+s.length));}
+function filter(test,label,s){
+  let count=0;
+  (function walk(n,inherit){
+    const self=n.d>0&&test(n);if(self)count++;
+    let kid=false;(n.c||[]).forEach(ch=>{if(walk(ch,inherit||self))kid=true;});
+    if(n.li){n.li.hidden=!(self||kid||inherit);if(n.c)setOpen(n,kid||(self&&!s&&n.d>0));markText(n,self&&s?s:null);}
+    return self||kid;
+  })(MAP,false);
+  hits.textContent=count?count+" "+label+(count>1?(/ch$/.test(label)?"es":"s"):""):"No matches";
+}
+function reset(){all.forEach(n=>{if(n.li){n.li.hidden=false;markText(n,null);}});toLevel(level);hits.textContent="";}
+function apply(){
+  const s=q.value.trim().toLowerCase();
+  if(s){filter(n=>n.t.toLowerCase().includes(s),"match",s);return;}
+  if(lens){filter(n=>n.a&&n.a.includes(lens),"point for this audience",null);return;}
+  reset();
+}
+q.addEventListener("input",apply);
+document.querySelectorAll("#lv button").forEach(b=>b.onclick=()=>{
+  document.querySelectorAll("#lv button").forEach(x=>x.classList.remove("on"));b.classList.add("on");
+  level=+b.dataset.l;q.value="";setLens("");reset();
+});
+function setLens(k){lens=k;document.querySelectorAll("#lens button").forEach(x=>x.classList.toggle("on",x.dataset.k===k));}
+document.querySelectorAll("#lens button").forEach(b=>b.onclick=()=>{q.value="";setLens(b.dataset.k);apply();});
+function goTo(id){
+  q.value="";setLens("");reset();
+  const n=byId[id];let p=n.p;
+  while(p&&p.d>0){setOpen(p,true);p=p.p;}
+  if(n.c)setOpen(n,true);
+  n.row.scrollIntoView({behavior:"smooth",block:"center"});
+  n.row.classList.remove("flash");void n.row.offsetWidth;n.row.classList.add("flash");
+}
+</script>
+</body>
+</html>
